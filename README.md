@@ -9,4 +9,4 @@ Developed by
 ---
 
 ![VC1](https://i.imgur.com/5ZVqmej.png)
-![VC2](https://i.imgur.com/7osG4d1.png)
+![VC2](https://i.imgur.com/2LVcMc3.png)
