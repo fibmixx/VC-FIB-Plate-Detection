@@ -1,0 +1,42 @@
+function [top_lletres, top_scores] = deteccio_lletra(img_roi)
+    % DETECCIO_LLETRA Retorna el Top 5 usant descriptors HOG en escala de grisos.
+
+    % 1. Càrrega persistent optimitzada del model
+    persistent model_ocr;
+    if isempty(model_ocr)
+        nom_fitxer_model = 'modeloOCR_HOG.mat';
+        if exist(nom_fitxer_model, 'file')
+            data = load(nom_fitxer_model);
+            camps = fieldnames(data);
+            model_ocr = data.(camps{1}); 
+        else
+            error('No s''ha trobat el fitxer "%s".', nom_fitxer_model);
+        end
+    end
+
+    % 2. --- PREPROCESAT PREVENTIU ---
+    bw_norm = imresize(img_roi, [40, 20]);
+    
+    % 3. Extracció directa de descriptors HOG (1.296 columnes)
+    features_hog = extractHOGFeatures(double(bw_norm), 'CellSize', [4 4]);
+    num_features = length(features_hog);
+    
+    noms_columnes = arrayfun(@(x) sprintf('HOG_%d', x), 1:num_features, 'UniformOutput', false);
+    taula_caracter = array2table(features_hog, 'VariableNames', noms_columnes);
+    
+    % 4. Predicció dels scores
+    [~, scores] = model_ocr.predictFcn(taula_caracter);
+    
+    % 5. Mapeig de les 36 classes fixes
+    lletres_ordenades_classes = {'0','1','2','3','4','5','6','7','8','9',...
+                                 'A','B','C','D','E','F','G','H','I','J',...
+                                 'K','L','M','N','O','P','Q','R','S','T','U',...
+                                 'V','W','X','Y','Z'};
+    llista_classes = string(lletres_ordenades_classes);
+    
+    [scores_ordenats, indexs_ordre] = sort(scores, 'descend');
+    lletres_ordenades = llista_classes(indexs_ordre);
+    
+    top_lletres = lletres_ordenades(1:5);
+    top_scores = scores_ordenats(1:5) * 100;
+end
